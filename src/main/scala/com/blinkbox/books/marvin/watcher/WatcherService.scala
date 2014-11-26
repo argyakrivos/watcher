@@ -14,6 +14,6 @@ object WatcherService extends App with Configuration with Loggers with StrictLog
   } catch {
     case ex: Throwable =>
       logger.error("Error during initialisation of the service", ex)
-      System.exit(1)
+      System.exit(-1)
   }
 }
