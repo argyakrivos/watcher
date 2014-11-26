@@ -7,9 +7,11 @@ lazy val root = (project in file(".")).
     scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8", "-target:jvm-1.7", "-Xfatal-warnings", "-Xfuture"),
     libraryDependencies ++= {
       val akkaV = "2.3.7"
-      val sprayV = "1.3.2"
       Seq(
-      ...
+        "com.typesafe.akka"         %% "akka-slf4j"        % akkaV,
+        "com.typesafe.akka"         %% "akka-testkit"      % akkaV     % Test,
+        "com.blinkbox.books"        %% "common-scala-test" % "0.3.0"   % Test,
+        "com.blinkbox.books.hermes" %% "rabbitmq-ha"       % "7.1.1"
       )
     }
   ).
