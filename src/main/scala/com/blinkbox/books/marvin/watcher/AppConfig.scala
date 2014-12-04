@@ -11,9 +11,24 @@ import com.typesafe.config.Config
 
 import scala.concurrent.duration._
 
-case class AppConfig()
+case class AppConfig(processingDirectory: String, inboundDirectory: String, storageDirectory: String, errorDirectory: String, messaging: MessagingConfig)
+case class MessagingConfig(rabbitmq: RabbitMqConfig, retryInterval: FiniteDuration, marvin: PublisherConfiguration)
 
 object AppConfig {
   val prefix = "service.watcher"
-  def apply(config: Config) = new AppConfig()
+  def apply(config: Config) = new AppConfig(
+    config.getString(s"$prefix.directories.processing"),
+    config.getString(s"$prefix.directories.inbound"),
+    config.getString(s"$prefix.directories.storage"),
+    config.getString(s"$prefix.directories.error"),
+    MessagingConfig(config, s"$prefix.rabbitmq")
+  )
+}
+
+object MessagingConfig {
+  def apply(config: Config, prefix: String) = new MessagingConfig(
+    RabbitMqConfig(config.getConfig(AppConfig.prefix)),
+    config.getDuration(s"$prefix.retryInterval", TimeUnit.SECONDS).seconds,
+    PublisherConfiguration(config.getConfig(s"$prefix.output"))
+  )
 }
