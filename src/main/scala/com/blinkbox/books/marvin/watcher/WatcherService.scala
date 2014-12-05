@@ -28,6 +28,7 @@ object WatcherService extends App with Configuration with Loggers with StrictLog
     val fileProcessor = new FileProcessor(
       inboundDirectory, processingDirectory, storageDirectory, errorDirectory, rabbitPublisher, appConfig.messaging.marvin.messageTimeout
     )
+
     logger.info(s"Started Marvin/watcher v${Version}.")
     while (true) {
       logger.debug(s"Scanning ${inboundDirectory}")

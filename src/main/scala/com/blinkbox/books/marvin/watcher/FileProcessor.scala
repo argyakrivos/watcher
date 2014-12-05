@@ -18,7 +18,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 class FileProcessor(inboundDirectory: Path, processingDirectory: Path, storageDirectory: Path, errorDirectory: Path, rabbitPublisher: ActorRef, messageTimeout: FiniteDuration) extends StrictLogging {
-  val tika = new Tika()
+  val tika: Tika = new Tika()
   implicit val timeout = Timeout(messageTimeout)
 
   def fileFound(file: Path): Unit = {
