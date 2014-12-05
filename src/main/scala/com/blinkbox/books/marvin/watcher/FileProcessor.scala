@@ -72,7 +72,15 @@ class FileProcessor(inboundDirectory: Path, processingDirectory: Path, storageDi
     val fileStream = Files.newInputStream(file)
     val contentType = Try(tika.detect(fileStream, file.toString)).getOrElse("")
     fileStream.close()
-    contentType
+    if (contentType == "application/xml") {
+      new OnixVersionDetector(file).version match {
+        case Some(2) => "application/onix2+xml"
+        case Some(3) => "application/onix3+xml"
+        case _ => contentType
+      }
+    } else {
+      contentType
+    }
   }
 
   private def moveToProcessing(file: Path, publisher: String, relativeName: String):Path = {

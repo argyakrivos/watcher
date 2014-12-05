@@ -30,9 +30,9 @@ object WatcherService extends App with Configuration with Loggers with StrictLog
     )
     logger.info(s"Started Marvin/watcher v${Version}.")
     while (true) {
-      logger.info(s"Scanning ${inboundDirectory}")
+      logger.debug(s"Scanning ${inboundDirectory}")
       directoryScanner.scan(fileProcessor.fileFound)
-      logger.info(s"Waiting ${delay} before starting a new scan.")
+      logger.debug(s"Waiting ${delay} before starting a new scan.")
       Thread.sleep(delay.toMillis)
     }
   } catch {
