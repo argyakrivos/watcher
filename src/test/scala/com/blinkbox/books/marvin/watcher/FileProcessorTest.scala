@@ -21,7 +21,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 
 @RunWith(classOf[JUnitRunner])
-class FileProcessorTest extends TestConfig with ScalaFutures {
+class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging {
   implicit val system = ActorSystem("marvin-watcher")
   implicit val timeout = Timeout(500.millis)
   implicit val formats = new DefaultFormats {}
@@ -30,11 +30,15 @@ class FileProcessorTest extends TestConfig with ScalaFutures {
 
   it must "copy the file to storage, send a message and remove the original" in new TestFixture(new SuccessfulFakeRabbit) {
     fileProcessor.fileFound(filePath)
-
-    // A message has been sent to RabbitMQ
     assert(lastRabbitMessage != None, "No messages were sent to RabbitMQ")
     val newLocation = storageDirectory.resolve(publisher).resolve(fileName)
     assert(Files.isRegularFile(newLocation))
+  }
+
+  it must "fail silently and send no messages if the file doesn't exist" in new TestFixture(new FailingFakeRabbit) {
+    Files.delete(filePath)
+    fileProcessor.fileFound(filePath)
+    assert(lastRabbitMessage == None, "Messages were sent to RabbitMQ")
   }
 
   it must "correctly guess epub file type" in new TestFixture(new SuccessfulFakeRabbit) {
@@ -52,12 +56,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures {
   }
 
   it must "correctly guess jpeg file type" in new TestFixture(new SuccessfulFakeRabbit) {
-    val jpgFileLocal = Paths.get(getClass.getResource("/image.jpg").toURI.getPath)
-    val jpgFile = inboundDirectory.resolve(publisher).resolve("test.jpg")
-    Files.createDirectories(jpgFile.getParent)
-    Files.copy(jpgFileLocal, jpgFile)
-    assert(Files.isRegularFile(jpgFile))
-
+    val jpgFile = pathForTestResource("/image.jpg")
     fileProcessor.fileFound(jpgFile)
     val lastMessage = lastRabbitMessage
     assert(lastRabbitMessage != None, "No messages were sent to RabbitMQ")
@@ -66,12 +65,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures {
   }
 
   it must "correctly guess png file type" in new TestFixture(new SuccessfulFakeRabbit) {
-    val pngFileLocal = Paths.get(getClass.getResource("/image.png").toURI.getPath)
-    val pngFile = inboundDirectory.resolve(publisher).resolve("test.png")
-    Files.createDirectories(pngFile.getParent)
-    Files.copy(pngFileLocal, pngFile)
-    assert(Files.isRegularFile(pngFile))
-
+    val pngFile = pathForTestResource("/image.png")
     fileProcessor.fileFound(pngFile)
     val lastMessage = lastRabbitMessage
     assert(lastRabbitMessage != None, "No messages were sent to RabbitMQ")
@@ -80,12 +74,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures {
   }
 
   it must "correctly guess onix 2 file type" in new TestFixture(new SuccessfulFakeRabbit) {
-    val onixFileLocal = Paths.get(getClass.getResource("/onix.xml").toURI.getPath)
-    val onixFile = inboundDirectory.resolve(publisher).resolve("test.xml")
-    Files.createDirectories(onixFile.getParent)
-    Files.copy(onixFileLocal, onixFile)
-    assert(Files.isRegularFile(onixFile))
-
+    val onixFile = pathForTestResource("/onix.xml")
     fileProcessor.fileFound(onixFile)
     val lastMessage = lastRabbitMessage
     assert(lastRabbitMessage != None, "No messages were sent to RabbitMQ")
@@ -116,6 +105,15 @@ class FileProcessorTest extends TestConfig with ScalaFutures {
       val future = (rabbitProvider.fakeRabbitPublisher ? rabbitProvider.LastMessage).mapTo[Option[Event]]
       Await.result(future, 100.millis)
     }
+
+    def pathForTestResource(location: String): Path = {
+      val fileLocal = Paths.get(getClass.getResource(location).toURI.getPath)
+      val file = inboundDirectory.resolve(publisher).resolve("test_file_no_extension")
+      Files.createDirectories(file.getParent)
+      Files.copy(fileLocal, file)
+      assert(Files.isRegularFile(file))
+      file
+    }
   }
 
   trait RabbitProvider {
@@ -135,15 +133,15 @@ class FileProcessorTest extends TestConfig with ScalaFutures {
     })
   }
 
-//  object FailingFakeRabbit extends RabbitProvider {
-//    val fakeRabbitPublisher = TestActorRef(new Actor {
-//      var lastMessage: Option[Any] = None
-//      def receive = {
-//        case LastMessage => sender ! lastMessage
-//        case msg =>
-//          lastMessage = Some(msg)
-//          sender ! akka.actor.Status.Failure(new Throwable)
-//      }
-//    })
-//  }
+  class FailingFakeRabbit extends RabbitProvider {
+    val fakeRabbitPublisher = TestActorRef(new Actor {
+      var lastMessage: Option[Event] = None
+      def receive = {
+        case LastMessage => sender ! lastMessage
+        case msg: Event =>
+          lastMessage = Some(msg)
+          sender ! akka.actor.Status.Failure(new Throwable)
+      }
+    })
+  }
 }

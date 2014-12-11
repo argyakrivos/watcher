@@ -37,11 +37,9 @@ class FileProcessor(inboundDirectory: Path, processingDirectory: Path, storageDi
 
   private def processFile(file:Path, publisher: String, relativeName: String): Unit = {
     val processingPath = moveToProcessing(file, publisher, relativeName)
-
-    // Things we need to know about the
+    
     val lastModified = new DateTime(Files.getLastModifiedTime(processingPath).toMillis, DateTimeZone.UTC)
     val mimeType = mimeTypeFor(processingPath)
-    println(mimeType)
 
     try {
       val storagePath = copyToStorage(processingPath, publisher, relativeName)
