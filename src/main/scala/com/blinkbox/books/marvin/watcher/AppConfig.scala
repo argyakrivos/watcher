@@ -8,6 +8,7 @@ import com.blinkbox.books.rabbitmq.RabbitMqConfig
 import com.blinkbox.books.rabbitmq.RabbitMqConfirmedPublisher.PublisherConfiguration
 import com.blinkbox.books.rabbitmq.RabbitMqConsumer.QueueConfiguration
 import com.typesafe.config.Config
+import com.blinkbox.books.config.RichConfig
 
 import scala.concurrent.duration._
 
@@ -28,7 +29,7 @@ object AppConfig {
 object MessagingConfig {
   def apply(config: Config, prefix: String) = new MessagingConfig(
     RabbitMqConfig(config.getConfig(AppConfig.prefix)),
-    config.getDuration(s"$prefix.retryInterval", TimeUnit.SECONDS).seconds,
+    config.getFiniteDuration(s"$prefix.retryInterval"),
     PublisherConfiguration(config.getConfig(s"$prefix.output"))
   )
 }

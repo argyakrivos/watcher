@@ -14,9 +14,9 @@ class DirectoryScanner(override val rootDirectory: Path) {
 
 trait ScanningFunctions extends StrictLogging {
   val rootDirectory: Path
-  def scan(fileFoundFunction: Path => Unit) = {
+  def scan(fileFound: Path => Unit):Unit  = {
     try {
-      scanForFiles(rootDirectory, isRoot = true, fileFoundFunction)
+      scanForFiles(rootDirectory, isRoot = true, fileFound)
     } catch {
       case ex: IOException => logger.error(s"IO exception while scanning ${rootDirectory}", ex)
     }
@@ -26,12 +26,16 @@ trait ScanningFunctions extends StrictLogging {
 }
 
 trait DefaultScanningFunctions extends ScanningFunctions {
-  override def scanForFiles(directory: Path, isRoot: Boolean, fileFoundFunction: Path => Unit): Unit = {
-    val rootDirStream = Files.newDirectoryStream(directory).asScala
-    rootDirStream.foreach {
-      case file if Files.isRegularFile(file) && !isRoot => fileFoundFunction(file)
-      case dir if Files.isDirectory(dir) => scanForFiles(dir, isRoot = false, fileFoundFunction)
-      case file => logger.warn("File found in the root directory, please remove!", file)
+  override def scanForFiles(directory: Path, isRoot: Boolean, fileFound: Path => Unit): Unit = {
+    val dirStream = Files.newDirectoryStream(directory)
+    try {
+      dirStream.asScala.foreach {
+        case file if Files.isRegularFile(file) && !isRoot => fileFound(file)
+        case dir if Files.isDirectory(dir) => scanForFiles(dir, isRoot = false, fileFound)
+        case file => logger.warn("File found in the root directory, please remove!", file)
+      }
+    } finally {
+      dirStream.close()
     }
   }
 }

@@ -26,7 +26,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
 
   behavior of "The File Processor"
 
-  it must "copy the file to storage, send a message and remove the original" in new TestFixture(new SuccessfulFakeRabbit) {
+  it must "copy the file to storage, send a message and remove the original" in new TestFixture(new FakeRabbit) {
     fileProcessor.fileFound(filePath)
     val lastMessage = lastRabbitMessage
     assert(lastMessage != None, "No messages were sent to RabbitMQ")
@@ -34,13 +34,13 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
     assert(Files.isRegularFile(newLocation))
   }
 
-  it must "fail silently and send no messages if the file doesn't exist" in new TestFixture(new FailingFakeRabbit) {
+  it must "fail silently and send no messages if the file doesn't exist" in new TestFixture(new FakeRabbit(akka.actor.Status.Failure(new Throwable))) {
     Files.delete(filePath)
     fileProcessor.fileFound(filePath)
     assert(lastRabbitMessage == None, "Messages were sent to RabbitMQ")
   }
 
-  it must "correctly guess epub file type" in new TestFixture(new SuccessfulFakeRabbit) {
+  it must "correctly guess epub file type" in new TestFixture(new FakeRabbit) {
     val epubFileLocal = Paths.get(getClass.getResource("/book.epub").toURI.getPath)
     val epubFile = inboundDirectory.resolve(publisher).resolve("test.epub")
     Files.createDirectories(epubFile.getParent)
@@ -55,7 +55,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
     assert(lastMessage.get.header.additional("referenced-content-type") == obj.source.contentType)
   }
 
-  it must "correctly guess jpeg file type" in new TestFixture(new SuccessfulFakeRabbit) {
+  it must "correctly guess jpeg file type" in new TestFixture(new FakeRabbit) {
     val jpgFile = pathForTestResource("/image.jpg")
     fileProcessor.fileFound(jpgFile)
     val lastMessage = lastRabbitMessage
@@ -65,7 +65,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
     assert(lastMessage.get.header.additional("referenced-content-type") == obj.source.contentType)
   }
 
-  it must "correctly guess png file type" in new TestFixture(new SuccessfulFakeRabbit) {
+  it must "correctly guess png file type" in new TestFixture(new FakeRabbit) {
     val pngFile = pathForTestResource("/image.png")
     fileProcessor.fileFound(pngFile)
     val lastMessage = lastRabbitMessage
@@ -75,7 +75,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
     assert(lastMessage.get.header.additional("referenced-content-type") == obj.source.contentType)
   }
 
-  it must "correctly guess onix 2 file type" in new TestFixture(new SuccessfulFakeRabbit) {
+  it must "correctly guess onix 2 file type" in new TestFixture(new FakeRabbit) {
     val onixFile = pathForTestResource("/onix.xml")
     fileProcessor.fileFound(onixFile)
     val lastMessage = lastRabbitMessage
@@ -85,7 +85,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
     assert(lastMessage.get.header.additional("referenced-content-type") == obj.source.contentType)
   }
 
-  class TestFixture(val rabbitProvider: RabbitProvider) {
+  class TestFixture(val rabbitProvider: FakeRabbit) {
     val fs = Jimfs.newFileSystem(Configuration.unix())
     val inboundDirectory = fs.getPath("/inbound")
     val processingDirectory = fs.getPath("/processing")
@@ -105,7 +105,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
     val fileProcessor = new FileProcessor(inboundDirectory, processingDirectory, storageDirectory, errorDirectory, rabbitProvider.fakeRabbitPublisher, 500.millis)
 
     def lastRabbitMessage: Option[Event] = {
-      val future = (rabbitProvider.fakeRabbitPublisher ? rabbitProvider.LastMessage).mapTo[Option[Event]]
+      val future = (rabbitProvider.fakeRabbitPublisher ? LastMessage).mapTo[Option[Event]]
       Await.result(future, 100.millis)
     }
 
@@ -119,31 +119,17 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
     }
   }
 
-  trait RabbitProvider {
-    val fakeRabbitPublisher: ActorRef
-    case object LastMessage
-  }
+  case object LastMessage
 
-  class SuccessfulFakeRabbit extends RabbitProvider {
+  class FakeRabbit(response: Any = akka.actor.Status.Success(())) {
     val fakeRabbitPublisher = TestActorRef(new Actor {
       var lastMessage: Option[Event] = None
+
       def receive = {
         case LastMessage => sender ! lastMessage
         case msg: Event =>
           lastMessage = Some(msg)
-          sender ! akka.actor.Status.Success(())
-      }
-    })
-  }
-
-  class FailingFakeRabbit extends RabbitProvider {
-    val fakeRabbitPublisher = TestActorRef(new Actor {
-      var lastMessage: Option[Event] = None
-      def receive = {
-        case LastMessage => sender ! lastMessage
-        case msg: Event =>
-          lastMessage = Some(msg)
-          sender ! akka.actor.Status.Failure(new Throwable)
+          sender ! response
       }
     })
   }

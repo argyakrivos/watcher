@@ -1,5 +1,6 @@
 package com.blinkbox.books.marvin.watcher
 
+import java.lang.Throwable
 import java.nio.file._
 
 import akka.actor.{ActorSystem, Props}
@@ -31,10 +32,14 @@ object WatcherService extends App with Configuration with Loggers with StrictLog
 
     logger.info(s"Started Marvin/watcher v${Version}.")
     while (true) {
-      logger.debug(s"Scanning ${inboundDirectory}")
-      directoryScanner.scan(fileProcessor.fileFound)
-      logger.debug(s"Waiting ${delay} before starting a new scan.")
-      Thread.sleep(delay.toMillis)
+      try {
+        logger.debug(s"Scanning ${inboundDirectory}")
+        directoryScanner.scan(fileProcessor.fileFound)
+        logger.debug(s"Waiting ${delay} before starting a new scan.")
+        Thread.sleep(delay.toMillis)
+      } catch {
+        case ex: Throwable => logger.error("Uncaught error while scanning; restarting", ex)
+      }
     }
   } catch {
     case ex: Throwable =>

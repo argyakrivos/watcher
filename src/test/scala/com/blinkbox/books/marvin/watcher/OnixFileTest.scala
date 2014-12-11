@@ -12,7 +12,7 @@ import scala.io.Source
 class OnixFileTest extends TestConfig {
   behavior of "The Onix Version Detector"
 
-  it must "correctly identify ONIX 2" in new TestFixture {
+  it must "correctly identify ONIX 2" in {
     val xml = <ONIXmessage></ONIXmessage>
     val xmlString = Source.fromString(xml.toString)
     val onix = new OnixFile(xmlString)
@@ -20,7 +20,7 @@ class OnixFileTest extends TestConfig {
     assert(onix.version == Some(2))
   }
 
-  it must "correctly identify ONIX 3" in new TestFixture {
+  it must "correctly identify ONIX 3" in {
     val xml = <ONIXmessage release="3"></ONIXmessage>
     val xmlString = Source.fromString(xml.toString)
     val onix = new OnixFile(xmlString)
@@ -28,14 +28,11 @@ class OnixFileTest extends TestConfig {
     assert(onix.version == Some(3))
   }
 
-  it must "correctly identify non-ONIX xml" in new TestFixture {
+  it must "correctly identify non-ONIX xml" in {
     val xml = <html></html>
     val xmlString = Source.fromString(xml.toString)
     val onix = new OnixFile(xmlString)
 
     assert(onix.version == None)
-  }
-
-  trait TestFixture {
   }
 }
