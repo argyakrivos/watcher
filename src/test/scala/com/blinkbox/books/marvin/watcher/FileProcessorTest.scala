@@ -2,23 +2,21 @@ package com.blinkbox.books.marvin.watcher
 
 import java.nio.file._
 
-import akka.actor.{ActorRef, ActorSystem, Actor}
-import akka.testkit.{TestActorRef, TestProbe}
+import akka.actor.{Actor, ActorRef, ActorSystem}
+import akka.pattern.ask
+import akka.testkit.TestActorRef
+import akka.util.Timeout
 import com.blinkbox.books.json.DefaultFormats
+import com.blinkbox.books.messaging.Event
 import com.blinkbox.books.schemas.ingestion.file.pending.v2.FilePending
-import com.blinkbox.books.schemas.ingestion.file.pending.v2.FilePending.Details
 import com.google.common.jimfs.{Configuration, Jimfs}
-import org.json4s.JsonInput
-import org.json4s.jackson.{Serialization, JsonMethods}
+import org.json4s.jackson.Serialization
 import org.junit.runner.RunWith
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.JUnitRunner
-import com.blinkbox.books.messaging.Event
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import akka.pattern.ask
-import akka.util.Timeout
 
 @RunWith(classOf[JUnitRunner])
 class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging {
