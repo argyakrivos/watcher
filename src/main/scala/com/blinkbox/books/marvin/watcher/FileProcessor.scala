@@ -18,7 +18,8 @@ import scala.io.Source
 import scala.util.Try
 import scala.util.control.NonFatal
 
-class FileProcessor(inboundDirectory: Path, processingDirectory: Path, storageDirectory: Path, errorDirectory: Path, rabbitPublisher: ActorRef, messageTimeout: FiniteDuration) extends StrictLogging {
+class FileProcessor(inboundDirectory: Path, processingDirectory: Path, storageDirectory: Path,
+                    errorDirectory: Path, rabbitPublisher: ActorRef, messageTimeout: FiniteDuration) extends StrictLogging {
   val tika: Tika = new Tika()
   implicit val timeout = Timeout(messageTimeout)
 
@@ -37,7 +38,7 @@ class FileProcessor(inboundDirectory: Path, processingDirectory: Path, storageDi
 
   private def processFile(file:Path, publisher: String, relativeName: String): Unit = {
     val processingPath = moveToProcessing(file, publisher, relativeName)
-    
+
     val lastModified = new DateTime(Files.getLastModifiedTime(processingPath).toMillis, DateTimeZone.UTC)
     val mimeType = mimeTypeFor(processingPath)
 

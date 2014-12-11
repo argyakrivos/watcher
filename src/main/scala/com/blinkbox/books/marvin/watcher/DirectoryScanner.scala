@@ -22,7 +22,7 @@ trait ScanningFunctions extends StrictLogging {
     }
   }
 
-  def scanForFiles(directory: Path, isRoot: Boolean, fileFoundFunction: Path => Unit): Unit
+  def scanForFiles(directory: Path, isRoot: Boolean, fileFound: Path => Unit): Unit
 }
 
 trait DefaultScanningFunctions extends ScanningFunctions {
