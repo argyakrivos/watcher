@@ -28,7 +28,8 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
 
   it must "copy the file to storage, send a message and remove the original" in new TestFixture(new SuccessfulFakeRabbit) {
     fileProcessor.fileFound(filePath)
-    assert(lastRabbitMessage != None, "No messages were sent to RabbitMQ")
+    val lastMessage = lastRabbitMessage
+    assert(lastMessage != None, "No messages were sent to RabbitMQ")
     val newLocation = storageDirectory.resolve(publisher).resolve(fileName)
     assert(Files.isRegularFile(newLocation))
   }
@@ -51,6 +52,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
     assert(lastRabbitMessage != None, "No messages were sent to RabbitMQ")
     val obj = Serialization.read[FilePending.Details](lastMessage.get.body.asString)
     assert(obj.source.contentType == "application/epub+zip")
+    assert(lastMessage.get.header.additional("referenced-content-type") == obj.source.contentType)
   }
 
   it must "correctly guess jpeg file type" in new TestFixture(new SuccessfulFakeRabbit) {
@@ -60,6 +62,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
     assert(lastRabbitMessage != None, "No messages were sent to RabbitMQ")
     val obj = Serialization.read[FilePending.Details](lastMessage.get.body.asString)
     assert(obj.source.contentType == "image/jpeg")
+    assert(lastMessage.get.header.additional("referenced-content-type") == obj.source.contentType)
   }
 
   it must "correctly guess png file type" in new TestFixture(new SuccessfulFakeRabbit) {
@@ -69,6 +72,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
     assert(lastRabbitMessage != None, "No messages were sent to RabbitMQ")
     val obj = Serialization.read[FilePending.Details](lastMessage.get.body.asString)
     assert(obj.source.contentType == "image/png")
+    assert(lastMessage.get.header.additional("referenced-content-type") == obj.source.contentType)
   }
 
   it must "correctly guess onix 2 file type" in new TestFixture(new SuccessfulFakeRabbit) {
@@ -78,6 +82,7 @@ class FileProcessorTest extends TestConfig with ScalaFutures with HiddenLogging 
     assert(lastRabbitMessage != None, "No messages were sent to RabbitMQ")
     val obj = Serialization.read[FilePending.Details](lastMessage.get.body.asString)
     assert(obj.source.contentType == "application/onix2+xml")
+    assert(lastMessage.get.header.additional("referenced-content-type") == obj.source.contentType)
   }
 
   class TestFixture(val rabbitProvider: RabbitProvider) {
