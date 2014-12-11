@@ -14,6 +14,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.io.Source
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -40,6 +41,7 @@ class FileProcessor(inboundDirectory: Path, processingDirectory: Path, storageDi
     // Things we need to know about the
     val lastModified = new DateTime(Files.getLastModifiedTime(processingPath).toMillis, DateTimeZone.UTC)
     val mimeType = mimeTypeFor(processingPath)
+    println(mimeType)
 
     try {
       val storagePath = copyToStorage(processingPath, publisher, relativeName)
@@ -73,7 +75,8 @@ class FileProcessor(inboundDirectory: Path, processingDirectory: Path, storageDi
     val contentType = Try(tika.detect(fileStream, file.toString)).getOrElse("")
     fileStream.close()
     if (contentType == "application/xml") {
-      new OnixVersionDetector(file).version match {
+      val source = Source.fromInputStream(Files.newInputStream(file))
+      new OnixFile(source).version match {
         case Some(2) => "application/onix2+xml"
         case Some(3) => "application/onix3+xml"
         case _ => contentType
@@ -84,8 +87,8 @@ class FileProcessor(inboundDirectory: Path, processingDirectory: Path, storageDi
   }
 
   private def moveToProcessing(file: Path, publisher: String, relativeName: String):Path = {
-    logger.debug(s"Moving ${file} to ")
     val processingPath = processingDirectory.resolve(publisher).resolve(relativeName)
+    logger.debug(s"Moving ${file} to Processing directory: ${processingPath.toString}")
     Files.createDirectories(processingPath.getParent)
     Files.move(file, processingPath, StandardCopyOption.ATOMIC_MOVE)
     processingPath
@@ -109,9 +112,9 @@ class FileProcessor(inboundDirectory: Path, processingDirectory: Path, storageDi
       transactionId = None,
       additional = Map[String, String]("referenced-content-type" -> fileDetails.source.contentType)
     )
-    val publishFuture: Future[Any] = (rabbitPublisher ? Event.json[FilePending.Details](headers, fileDetails))
-
-    Try(Await.result(publishFuture, 500.millis))
+    val msg = Event.json[FilePending.Details](headers, fileDetails)
+    val publishFuture: Future[Any] = rabbitPublisher ? msg
+    Try(Await.result(publishFuture, timeout.duration))
   }
 
   private def completeProcessing(processingPath: Path): Unit = {

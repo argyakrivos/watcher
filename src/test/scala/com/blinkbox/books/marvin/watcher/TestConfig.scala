@@ -5,7 +5,13 @@ import com.blinkbox.books.test.MockitoSyrup
 import org.scalatest.{BeforeAndAfterEach, FlatSpecLike}
 import org.slf4j.{Logger, LoggerFactory}
 
-trait TestConfig extends MockitoSyrup with FlatSpecLike with BeforeAndAfterEach {
+trait TestConfig extends MockitoSyrup with FlatSpecLike {
+
+}
+
+trait HiddenLogging extends BeforeAndAfterEach {
+  this: TestConfig =>
+
   override def beforeEach: Unit = {
     LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME).asInstanceOf[ClassicLogger].setLevel(Level.OFF)
   }

@@ -6,7 +6,6 @@ import java.nio.file.{Files, Path}
 import com.google.common.jimfs.{Configuration, Jimfs}
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
-import org.mockito.Spy
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])

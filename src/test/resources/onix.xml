@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE ONIXMessage SYSTEM "http://www.editeur.org/onix/2.1/reference/onix-international.dtd">
+<ONIXMessage>
+ <Header>
+  <FromCompany>Test Publisher</FromCompany>
+  <FromPerson>JP Hastings-Spital</FromPerson>
+  <FromEmail>jphastings@blinkbox.com</FromEmail>
+  <SentDate>20141211</SentDate>
+ </Header>
+ <!-- No product definitions -->
+</ONIXMessage>
