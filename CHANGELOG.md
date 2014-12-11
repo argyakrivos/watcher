@@ -1,5 +1,13 @@
 # Change log
 
+## 0.2.1 ([#4](https://git.mobcastdev.com/Marvin/watcher-service/pull/4) 2014-12-11 16:30:48)
+
+Standardise name of service
+
+### Improvement
+
+- Change the name of the service so it matches platform standards. (`watcher` -> `watcher-service`)
+
 ## 0.2.0 ([#3](https://git.mobcastdev.com/Marvin/watcher2/pull/3) 2014-12-11 16:17:35)
 
 MVP: Single threaded watching
