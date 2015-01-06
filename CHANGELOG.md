@@ -1,5 +1,13 @@
 # Change log
 
+## 0.3.0 ([#5](https://git.mobcastdev.com/Marvin/watcher-service/pull/5) 2015-01-06 12:01:27)
+
+Dot files ignored
+
+### New Feature
+
+- Ignore dotfiles if they are found in publisher folders (MV-218)
+
 ## 0.2.1 ([#4](https://git.mobcastdev.com/Marvin/watcher-service/pull/4) 2014-12-11 16:30:48)
 
 Standardise name of service
