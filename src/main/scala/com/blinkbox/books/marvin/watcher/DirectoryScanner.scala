@@ -32,11 +32,8 @@ trait DefaultScanningFunctions extends ScanningFunctions {
       dirStream.asScala.foreach {
         case dir if Files.isDirectory(dir) => scanForFiles(dir, isRoot = false, fileFound)
         case other if !Files.isRegularFile(other) => logger.warn("Non directory, non File found and ignored", other)
-        // Must all be files from this point
         case file if isRoot => logger.warn("File found in the root directory, please remove!", file)
-        // Must be files within a publisher directory at this point
         case file if Files.isHidden(file) => logger.warn("Dotfile ignored", file)
-        // All remaining items should be files we need to process
         case file => fileFound(file)
       }
     } finally {
