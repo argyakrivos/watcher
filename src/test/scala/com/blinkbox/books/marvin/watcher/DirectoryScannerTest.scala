@@ -37,6 +37,17 @@ class DirectoryScannerTest extends TestConfig {
     verify(fileFound, times(0)).apply(filePath)
   }
 
+  it must "not process files in root folders" in new RealFSFixture {
+    val fileName = "a_file_in_the_root.epub"
+    val filePath = inboundDirectory.resolve(fileName)
+    Files.createDirectories(filePath.getParent)
+    Files.createFile(filePath)
+
+    val fileFound = mock[Path => Unit]
+    directoryScanner.scan(fileFound)
+    verify(fileFound, times(0)).apply(filePath)
+  }
+
   "The DirectoryScanner when there is a filesystem failure" must "not die" in new ErrorFSFixture {
     val fileFound = mock[Path => Unit]
     directoryScanner.scan(fileFound)
