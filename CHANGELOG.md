@@ -1,5 +1,14 @@
 # Change log
 
+## 0.4.0 ([#6](https://git.mobcastdev.com/Marvin/watcher-service/pull/6) 2015-01-16 14:21:23)
+
+Run as quill user
+
+### New feature
+
+- Run as the quill user (for FTP permissions' sake)
+- Use default position for folders.
+
 ## 0.3.0 ([#5](https://git.mobcastdev.com/Marvin/watcher-service/pull/5) 2015-01-06 12:01:27)
 
 Dot files ignored
